@@ -1,11 +1,12 @@
 const express = require("express");
 const app = express();
-const mongoose = require("mongoose");
+const rootRouter = require("./routes/index");
+const cors = require("cors");
 
+app.use(cors());
+app.use(express.json());
 app.listen(3000, () => {
   console.log("Server started");
 });
 
-app.get("/", (req, res) => {
-  res.send("Home page");
-});
+app.use("/api/v1", rootRouter);
