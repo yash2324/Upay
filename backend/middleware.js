@@ -12,9 +12,7 @@ const authMiddleware = (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (err) {
-    return res.status(403).json({
-      msg: "Problem with the auth middleware",
-    });
+    return res.status(403).json({});
   }
 };
 
