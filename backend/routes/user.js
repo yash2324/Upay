@@ -2,8 +2,15 @@ const { Router } = require("express");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
 const { User } = require("../db");
+const { authMiddleware } = require("../middleware");
 const router = Router();
 require("dotenv").config();
+
+const updateBody = z.object({
+  username: z.string().email(),
+  firstName: z.string(),
+  lastName: z.string(),
+});
 
 const signupBod = z.object({
   username: z.string().email(),
@@ -69,6 +76,7 @@ router.post("/signin", async (req, res) => {
     );
     res.json({
       token: token,
+      userId: user._id,
     });
     return;
   }
@@ -77,4 +85,42 @@ router.post("/signin", async (req, res) => {
   });
 });
 
+router.put("/", authMiddleware, async (req, res) => {
+  const { success } = updateBody.safeParse(req.body);
+  if (!success) {
+    return res.status(411).json({
+      msg: "Invalid inputs",
+    });
+  }
+  await User.updateOne({ id: req.userId }, req.body);
+  res.json({
+    msg: "Updated successfuly",
+  });
+});
+
+router.get("/bulk", async (req, res) => {
+  const filter = req.query.filter || "";
+  const users = await User.find({
+    $or: [
+      {
+        firstName: {
+          $regex: filter,
+        },
+      },
+      {
+        lastName: {
+          $regex: filter,
+        },
+      },
+    ],
+  });
+  res.json({
+    user: users.map((user) => ({
+      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      _id: user._id,
+    })),
+  });
+});
 module.exports = router;
